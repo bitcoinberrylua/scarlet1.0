@@ -1,0 +1,142 @@
+local Kavo = {}
+local input = game:GetService("UserInputService")
+
+local themes = {
+    DarkTheme = {
+        SchemeColor = Color3.fromRGB(64, 64, 64),
+        Background = Color3.fromRGB(0, 0, 0),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(20, 20, 20)
+    },
+    LightTheme = {
+        SchemeColor = Color3.fromRGB(150, 150, 150),
+        Background = Color3.fromRGB(255, 255, 255),
+        TextColor = Color3.fromRGB(0, 0, 0),
+        ElementColor = Color3.fromRGB(224, 224, 224)
+    },
+    Default = {
+        SchemeColor = Color3.fromRGB(74, 99, 135),
+        Background = Color3.fromRGB(36, 37, 43),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(32, 32, 38)
+    }
+}
+
+-- Dragging support for both mobile and desktop
+function Kavo:EnableDragging(frame, parent)
+    parent = parent or frame
+    local dragging, dragInput, mousePos, framePos
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            mousePos = input.Position
+            framePos = parent.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    input.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - mousePos
+            parent.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+-- Create UI Library with themes
+function Kavo:CreateLib(title, themeName)
+    local theme = themes[themeName] or themes.Default
+
+    -- Create ScreenGui
+    local gui = Instance.new("ScreenGui", game.CoreGui)
+    gui.Name = title
+
+    -- Background image
+    local bgImage = Instance.new("ImageLabel", gui)
+    bgImage.Size = UDim2.new(1, 0, 1, 0)
+    bgImage.Position = UDim2.new(0, 0, 0, 0)
+    bgImage.Image = "https://raw.githubusercontent.com/bitcoinberrylua/speedy/main/Webp.webp"
+    bgImage.BackgroundTransparency = 1
+    bgImage.ZIndex = -1 -- Make sure the background image is behind all other UI elements
+
+    -- Main window frame
+    local mainFrame = Instance.new("Frame", gui)
+    mainFrame.Size = UDim2.new(0, 500, 0, 300)
+    mainFrame.Position = UDim2.new(0.5, -250, 0.5, -150)
+    mainFrame.BackgroundColor3 = theme.Background
+
+    -- Title label
+    local titleLabel = Instance.new("TextLabel", mainFrame)
+    titleLabel.Size = UDim2.new(1, 0, 0, 30)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.TextColor3 = theme.TextColor
+    titleLabel.TextSize = 18
+    titleLabel.Font = Enum.Font.GothamBold
+
+    Kavo:EnableDragging(mainFrame)
+
+    -- Create Tab Button
+    local function createTabButton(tabName)
+        local tabButton = Instance.new("TextButton", mainFrame)
+        tabButton.Text = tabName
+        tabButton.Size = UDim2.new(0, 100, 0, 30)
+        tabButton.BackgroundColor3 = theme.SchemeColor
+        return tabButton
+    end
+
+    -- Create Section
+    local function createSection(sectionName, parent)
+        local sectionFrame = Instance.new("Frame", parent)
+        sectionFrame.Size = UDim2.new(0, 480, 0, 100)
+        sectionFrame.BackgroundColor3 = theme.ElementColor
+        return sectionFrame
+    end
+
+    -- Create Button
+    local function createButton(buttonText, callback)
+        local button = Instance.new("TextButton", mainFrame)
+        button.Text = buttonText
+        button.Size = UDim2.new(0, 150, 0, 40)
+        button.BackgroundColor3 = theme.SchemeColor
+        button.MouseButton1Click:Connect(callback)
+        return button
+    end
+
+    -- Create Slider
+    local function createSlider(min, max, callback)
+        local slider = Instance.new("TextButton", mainFrame)
+        slider.Size = UDim2.new(0, 200, 0, 40)
+        slider.BackgroundColor3 = theme.ElementColor
+
+        slider.MouseButton1Down:Connect(function()
+            local value = math.random(min, max)
+            callback(value)
+        end)
+        return slider
+    end
+
+    return {
+        CreateTab = createTabButton,
+        CreateSection = createSection,
+        CreateButton = createButton,
+        CreateSlider = createSlider
+    }
+end
+
+-- Example usage
+local Library = Kavo
+local Window = Library.CreateLib("My UI", "DarkTheme")
+
+local tab1 = Window.CreateTab("Tab 1")
+local section1 = Window.CreateSection("Section 1", tab1)
+local button1 = Window.CreateButton("Click Me!", function() print("Button Clicked!") end)
+local slider1 = Window.CreateSlider(0, 100, function(value) print("Slider Value:", value) end)
