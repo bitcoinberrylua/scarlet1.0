@@ -131,12 +131,3 @@ function Kavo:CreateLib(title, themeName)
         CreateSlider = createSlider
     }
 end
-
--- Example usage
-local Library = Kavo
-local Window = Library.CreateLib("My UI", "DarkTheme")
-
-local tab1 = Window.CreateTab("Tab 1")
-local section1 = Window.CreateSection("Section 1", tab1)
-local button1 = Window.CreateButton("Click Me!", function() print("Button Clicked!") end)
-local slider1 = Window.CreateSlider(0, 100, function(value) print("Slider Value:", value) end)
